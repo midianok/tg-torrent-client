@@ -1,0 +1,13 @@
+{
+  "name": "tg-torrent-client",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "telegraf": "^3.37.0",
+    "webtorrent": "^0.108.1"
+  }
+}

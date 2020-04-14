@@ -8,6 +8,7 @@
   "license": "ISC",
   "dependencies": {
     "telegraf": "^3.37.0",
-    "webtorrent": "^0.108.1"
+    "webtorrent": "^0.108.1",
+    "magnet-uri": "latest"
   }
 }

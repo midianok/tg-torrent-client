@@ -23,7 +23,7 @@ bot.on('text', ctx => {
         torrent.files.forEach( file => {
             torrentSize += file.length
         });
-        if (torrentSize === 50 * 1024 * 1024){
+        if (torrentSize > 50 * 1024 * 1024){
             await ctx.reply("Torrent size can not be more than 50Mb");
             return;
         }

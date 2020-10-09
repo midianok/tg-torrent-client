@@ -1,59 +1,50 @@
 const parseTorrent = require('parse-torrent');
 const WebTorrent = require('webtorrent');
 const fs = require('fs');
-
-
 const { debounce, getBuffer, formatBytes } = require('./utils')
 
 
-module.exports.processMessage = ctx => {
-    const infoHash = tryParseTorrent(ctx.message.text);
+module.exports.processMessage = (magnet, torrentDir, onUpdate, pushFile, onDownloadComplete, onDone, onError) => {
+
+    const infoHash = tryParseTorrent(magnet);
     if (!infoHash) {
-        ctx.reply('It\'s not a magnet link');
+        onError('It\'s not a magnet link');
         return;
     }
-    const magnet = ctx.message.text;
-
     const client = new WebTorrent();
 
-    client.on('error', err => ctx.reply(err));
+    client.on('error', err => onError(err));
 
-    client.add(magnet, { path: `${__dirname}/torrents/${ctx.chat.id}`}, async torrent => {
+    client.add(magnet, { path: torrentDir}, async torrent => {
         let torrentSize = 0;
-        torrent.files.forEach( file => {
-            torrentSize += file.length
-        });
+        torrent.files.forEach(file => torrentSize += file.length);
 
         if (torrentSize > 50 * 1024 * 1024) {
-            await ctx.reply("Torrent size can not be more than 50Mb");
+            await onError("Torrent size can not be more than 50Mb");
             return;
         }
 
-        let updateMessage = await ctx.telegram.sendMessage(ctx.chat.id, `${formatBytes(torrent.downloaded)} of ${formatBytes(torrentSize, 2)}`);
-
-        const updateProgress = debounce( () => {
+        const onDownload = () => {
             const downloaded = formatBytes(torrent.downloaded, 2);
             const fullSize = formatBytes(torrentSize, 2);
-            ctx.telegram.editMessageText(updateMessage.chat.id, updateMessage.message_id, null, `${(torrent.progress* 100).toFixed(0)}% ${downloaded} of ${fullSize}`);
-        }, 200);
+            const progress = (torrent.progress * 100).toFixed(0);
 
-        torrent.on('download', () => updateProgress());
+            onUpdate(progress, downloaded, fullSize);
+        };
+        const onDownloadDebounced = debounce(onDownload, 500);
+
+        torrent.on('download', onDownloadDebounced);
 
         torrent.on('done', async () => {
-            await ctx.telegram.editMessageText(updateMessage.chat.id, updateMessage.message_id, null, `Torrent download completed. Sending...`);
+            await onDownloadComplete();
+
             const promises = [];
-            torrent.files.forEach(file => {
-                promises.push(getBuffer(file, buf => ctx.replyWithDocument({source: buf, filename: file.name})));
-            });
+            torrent.files.forEach(file => promises.push(getBuffer(file, buf => pushFile(buf, file.name))));
             await Promise.all(promises);
-            await ctx.telegram.editMessageText(updateMessage.chat.id, updateMessage.message_id, null, `Done`);
-            await client.remove(magnet, () => {
-                fs.rmdir(`${__dirname}/torrents/${ctx.chat.id}`, { recursive: true }, (err) => {
-                    if (err) {
-                        throw err;
-                    }
-                });
-            });
+
+            await onDone();
+
+            await client.remove(magnet, () => fs.rmdir(torrentDir, { recursive: true }, err => {}));
         });
     });
 

@@ -19,8 +19,6 @@ module.exports.processMessage = ctx => {
     client.on('error', err => ctx.reply(err));
 
     client.add(magnet, { path: `${__dirname}/torrents/${ctx.chat.id}`}, async torrent => {
-        torrent.on('error', function (err) {console.log(err)});
-
         let torrentSize = 0;
         torrent.files.forEach( file => {
             torrentSize += file.length

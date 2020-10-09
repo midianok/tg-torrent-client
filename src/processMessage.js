@@ -54,8 +54,6 @@ module.exports.processMessage = ctx => {
                     if (err) {
                         throw err;
                     }
-
-                    console.log(`${__dirname}/torrents/${ctx.chat.id} is deleted`);
                 });
             });
         });

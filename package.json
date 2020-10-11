@@ -6,9 +6,15 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "scripts": {
+    "test": "jest"
+  },
   "dependencies": {
     "parse-torrent": "^7.1.2",
     "telegraf": "^3.37.0",
     "webtorrent": "^0.108.1"
+  },
+  "devDependencies": {
+    "jest": "^26.5.2"
   }
 }

@@ -1,4 +1,4 @@
-const { runApp } = require('./src/main');
+const { runApp } = require('./src/telegram');
 const config = {
     token: process.env.BOT_TOKEN
 }
